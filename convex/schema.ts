@@ -22,4 +22,15 @@ export default defineSchema({
         read: v.boolean(),
         createdAt: v.number(),
     }).index("by_conversationId", ["conversationId"]),
+
+    // Typing indicators — tracks who is currently typing in which conversation.
+    // One record per user per conversation (upsert pattern, not one per keystroke).
+    // Records auto-expire: the query filters out records older than 3 seconds.
+    typing: defineTable({
+        conversationId: v.id("conversations"),
+        userId: v.id("users"),
+        updatedAt: v.number(), // last keystroke timestamp — refreshed on each keystroke
+    })
+        .index("by_conversationId", ["conversationId"])
+        .index("by_conversationId_userId", ["conversationId", "userId"]),
 });
