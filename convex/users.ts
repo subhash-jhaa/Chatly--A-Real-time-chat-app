@@ -6,7 +6,8 @@ export const store = mutation({
     handler: async (ctx) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) {
-            throw new Error("Not authenticated");
+            // Return null instead of throwing — handles auth pages and loading states
+            return null;
         }
 
         // Check if user already exists
@@ -70,5 +71,62 @@ export const getAll = query({
         const allUsers = await ctx.db.query("users").collect();
 
         return allUsers.filter((user) => user.clerkId !== identity.subject);
+    },
+});
+
+// ─── Presence Mutations ───────────────────────────────────────────────────
+
+/**
+ * setOnline — Marks the current user as online.
+ * Called when the user opens the app or returns to the tab.
+ *
+ * No args needed — we identify the user from their auth token.
+ * Sets isOnline: true and updates lastSeen to the current timestamp.
+ */
+export const setOnline = mutation({
+    args: {},
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return null;
+
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+            .unique();
+
+        if (!user) return null;
+
+        await ctx.db.patch(user._id, {
+            isOnline: true,
+            lastSeen: Date.now(),
+        });
+    },
+});
+
+/**
+ * setOffline — Marks the current user as offline.
+ * Called when the user closes the tab or switches away.
+ *
+ * lastSeen is updated here so we can show "Last seen X minutes ago"
+ * in the chat header and contact list later. This timestamp represents
+ * the moment the user was LAST active, not when they first went offline.
+ */
+export const setOffline = mutation({
+    args: {},
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return null;
+
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+            .unique();
+
+        if (!user) return null;
+
+        await ctx.db.patch(user._id, {
+            isOnline: false,
+            lastSeen: Date.now(),
+        });
     },
 });

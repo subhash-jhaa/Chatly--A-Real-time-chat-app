@@ -53,14 +53,16 @@ export default function ChatHeader({ otherUser }: ChatHeaderProps) {
             {/* ===== Avatar ===== */}
             <div className="relative">
                 {otherUser.imageUrl ? (
-                    // Next.js Image automatically optimizes format (WebP),
-                    // applies lazy loading, and prevents layout shift with
-                    // explicit width/height — unlike raw <img> tags.
+                    // Next.js Image automatically optimizes format (WebP)
+                    // and prevents layout shift with explicit width/height.
+                    // `priority` disables lazy loading — this avatar is at the
+                    // top of the chat view, always visible on first paint.
                     <Image
                         src={otherUser.imageUrl}
                         alt={otherUser.name}
                         width={40}
                         height={40}
+                        priority
                         className="h-10 w-10 rounded-full object-cover"
                     />
                 ) : (

@@ -60,14 +60,16 @@ export default function ConversationItem({
             {/* ===== Avatar with Online Indicator ===== */}
             <div className="relative flex-shrink-0">
                 {otherUser.imageUrl ? (
-                    // Next.js Image automatically optimizes format (WebP),
-                    // applies lazy loading, and prevents layout shift with
-                    // explicit width/height — unlike raw <img> tags.
+                    // Next.js Image automatically optimizes format (WebP)
+                    // and prevents layout shift with explicit width/height.
+                    // `priority` disables lazy loading for above-the-fold images —
+                    // sidebar avatars are visible on first paint (LCP elements).
                     <Image
                         src={otherUser.imageUrl}
                         alt={otherUser.name}
                         width={44}
                         height={44}
+                        priority
                         className="h-11 w-11 rounded-full object-cover"
                     />
                 ) : (
