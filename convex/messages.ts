@@ -85,9 +85,55 @@ export const send = mutation({
             content: args.content,
             read: false,
             createdAt: Date.now(),
+            isDeleted: false,
         });
 
         return messageId;
+    },
+});
+
+/**
+ * deleteMessage — Soft-deletes a message (clears content, keeps record).
+ *
+ * Only the message sender can delete their own message. The record stays
+ * in Convex so conversation flow isn't broken — the frontend renders
+ * a "This message was deleted" placeholder instead.
+ */
+export const deleteMessage = mutation({
+    args: {
+        messageId: v.id("messages"),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("Not authenticated");
+        }
+
+        const currentUser = await ctx.db
+            .query("users")
+            .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+            .unique();
+
+        if (!currentUser) {
+            throw new Error("User not found in database");
+        }
+
+        const message = await ctx.db.get(args.messageId);
+        if (!message) {
+            throw new Error("Message not found");
+        }
+
+        // Only the sender can delete their own message
+        if (message.senderId !== currentUser._id) {
+            throw new Error("Unauthorized: You can only delete your own messages");
+        }
+
+        // Soft delete — clear content but preserve the record for conversation continuity
+        await ctx.db.patch(args.messageId, {
+            isDeleted: true,
+            deletedAt: Date.now(),
+            content: "",
+        });
     },
 });
 
@@ -173,6 +219,8 @@ export const getByConversation = query({
 
                 return {
                     ...message,
+                    // Default for pre-existing messages that lack the field
+                    isDeleted: message.isDeleted ?? false,
                     sender: {
                         name: senderUser?.name ?? "Unknown",
                         imageUrl: senderUser?.imageUrl ?? "",

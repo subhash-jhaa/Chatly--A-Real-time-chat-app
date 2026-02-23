@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ConvexClientProvider from "@/components/providers/ConvexClientProvider";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import ConnectionStatus from "@/components/ui/ConnectionStatus";
 import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
@@ -31,9 +32,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ConvexClientProvider>
-          {/* ErrorBoundary catches unhandled rendering errors in any child */}
-          {/* component and shows a friendly fallback UI with "Try Again" */}
-          {/* instead of a blank white crash screen */}
+          {/* Connection banner — shows when Convex WebSocket disconnects */}
+          <ConnectionStatus />
+
           <ErrorBoundary>
             {children}
           </ErrorBoundary>

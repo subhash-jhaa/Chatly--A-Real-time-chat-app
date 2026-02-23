@@ -29,6 +29,7 @@ interface Message {
     content: string;
     createdAt: number;
     senderId: Id<"users">;
+    isDeleted: boolean;
     sender: {
         name: string;
         imageUrl: string;
@@ -120,6 +121,7 @@ export default function MessageList({ messages, currentUserId }: MessageListProp
                                 <MessageBubble
                                     message={message}
                                     isMyMessage={message.senderId === currentUserId}
+                                    currentUserId={currentUserId}
                                 />
                             </div>
                         );

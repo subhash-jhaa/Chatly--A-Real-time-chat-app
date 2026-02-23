@@ -2,6 +2,7 @@
 
 import { useMutation } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs"; // ← add this
 import { api } from "../../../convex/_generated/api";
 import { useEffect } from "react";
 import { usePresence } from "@/hooks/usePresence";
@@ -12,11 +13,8 @@ export default function UserStoreProvider({
     children: React.ReactNode;
 }) {
     const storeUser = useMutation(api.users.store);
-
-    // isLoaded tells us if Clerk has finished loading the auth state
-    // isSignedIn tells us if the user is actually signed in
-    // We need BOTH to be true before calling the mutation
     const { isLoaded, isSignedIn } = useAuth();
+    const { user } = useUser(); // <- add this — gives us live Clerk user data
 
     useEffect(() => {
         // Wait for Clerk to fully load AND confirm the user is signed in
@@ -26,13 +24,14 @@ export default function UserStoreProvider({
                 console.error("Failed to store user:", err)
             );
         }
-    }, [isLoaded, isSignedIn, storeUser]);
+    }, [
+        isLoaded,
+        isSignedIn,
+        storeUser,
+        user?.fullName,    // ← re-run when name changes
+        user?.imageUrl,    // ← re-run when avatar changes
+    ]);
 
-    // ─── Presence Tracking ────────────────────────────────────────────────
-    // usePresence handles online/offline status via visibilitychange,
-    // beforeunload, and mount/unmount lifecycle. It lives here because
-    // UserStoreProvider wraps the entire authenticated app — presence
-    // tracking activates once and stays active for the user's session.
     usePresence();
 
     return <>{children}</>;

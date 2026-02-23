@@ -21,7 +21,17 @@ export default defineSchema({
         content: v.string(),
         read: v.boolean(),
         createdAt: v.number(),
+        isDeleted: v.optional(v.boolean()),
+        deletedAt: v.optional(v.number()),
     }).index("by_conversationId", ["conversationId"]),
+
+    reactions: defineTable({
+        messageId: v.id("messages"),
+        userId: v.id("users"),
+        emoji: v.string(),
+    })
+        .index("by_messageId", ["messageId"])
+        .index("by_message_user", ["messageId", "userId"]),
 
     // Typing indicators — tracks who is currently typing in which conversation.
     // One record per user per conversation (upsert pattern, not one per keystroke).
